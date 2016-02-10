@@ -52,10 +52,20 @@ func main() {
             Name: "auto, a",
             Usage: "make up a file name for the dump - redisYYYYMMDDHHMMSS.rdmp",
           },
+          cli.StringFlag {
+            Name: "match, m",
+            Usage: "regexp filter for key names",
+          },
+          cli.BoolFlag {
+            Name: "invert, v",
+            Usage:"invert match regexp",
+          },
         },
         Action: func(c *cli.Context) {
-          args := c.Args()
-          auto := c.Bool("auto")
+          args  := c.Args()
+          auto  := c.Bool("auto")
+          regex := c.String("match")
+          inv   := c.Bool("invert")
 
           var fileName string
 
@@ -73,7 +83,7 @@ func main() {
             checkErr("brain damage. panic")
           }
 
-          keys, keys_c := r.getKeys(c.String("keys"))
+          keys, keys_c := r.getKeys(c.String("keys"),regex,inv)
 
           file, err := os.Create(fileName)
           checkErr(err)
@@ -159,15 +169,25 @@ func main() {
             Name: "yes",
             Usage: "really delete keys, default is pretend to delete",
           },
+          cli.StringFlag {
+            Name: "match, m",
+            Usage: "regexp filter for key names",
+          },
+          cli.BoolFlag {
+            Name: "invert, v",
+            Usage:"invert match regexp",
+          },
         },
         Action: func(c *cli.Context) {
           yes := c.Bool("yes")
           pat := c.String("keys")
+          regex := c.String("match")
+          inv   := c.Bool("invert")
           if pat == "" {
             checkErr("missing --keys pattern")
           }
 
-          keys, _ := r.getKeys(pat)
+          keys, _ := r.getKeys(pat,regex,inv)
 
           for i, k := range keys {
             fmt.Printf("%3d: %s\n",i,k)
@@ -187,14 +207,24 @@ func main() {
             Name: "keys, k",
             Usage: "keys pattern (passed to redis 'keys' command)",
           },
+          cli.StringFlag {
+            Name: "match, m",
+            Usage: "regexp filter for key names",
+          },
+          cli.BoolFlag {
+            Name: "invert, v",
+            Usage:"invert match regexp",
+          },
         },
         Action: func(c *cli.Context) {
           pat := c.String("keys")
+          regex := c.String("match")
+          inv   := c.Bool("invert")
           if pat == "" {
             checkErr("missing --keys pattern")
           }
 
-          keys, _ := r.getKeys(pat)
+          keys, _ := r.getKeys(pat,regex,inv)
 
           for _, k := range keys {
             r.printKey(k)

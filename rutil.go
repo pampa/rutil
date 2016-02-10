@@ -4,6 +4,7 @@ import (
   "os"
   "fmt"
   "io"
+  "regexp"
   "encoding/binary"
   "github.com/mediocregopher/radix.v2/redis"
 )
@@ -42,12 +43,29 @@ func (r *rutil) Client() *redis.Client {
   return r.cli
 }
 
-func (r *rutil) getKeys(wcard string) ([]string, int) {
+func (r *rutil) getKeys(wcard string, regex string, invert bool) ([]string, int) {
   res := r.Client().Cmd("KEYS",wcard)
   checkErr(res.Err)
   l, err := res.List()
   checkErr(err)
-  return l, len(l)
+  vsf := make([]string, 0)
+  for _, v := range l {
+    if invertibleMatch(v,regex,invert) {
+      vsf = append(vsf, v)
+    }
+  }
+
+  return vsf, len(vsf)
+}
+
+func invertibleMatch(s string, r string, v bool) bool {
+  if r == "" { return true }
+  m, _ := regexp.MatchString(r, s);
+  if(v) {
+    return !m
+  } else {
+    return m
+  }
 }
 
 func (r *rutil) dumpKey(k string) KeyDump {

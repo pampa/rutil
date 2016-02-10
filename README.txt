@@ -30,6 +30,8 @@ USAGE:
 OPTIONS:
    --keys, -k "*"	keys pattern (passed to redis 'keys' command)
    --auto, -a		make up a file name for the dump - redisYYYYMMDDHHMMSS.rdmp
+   --match, -m 		regexp filter for key names
+   --invert, -v		invert match regexp
    
 NAME:
    rutil restore - restore redis database from file
@@ -51,6 +53,8 @@ USAGE:
 OPTIONS:
    --keys, -k 	keys pattern (passed to redis 'keys' command)
    --yes	really delete keys, default is pretend to delete
+   --match, -m 	regexp filter for key names
+   --invert, -v	invert match regexp
    
 NAME:
    rutil print - print keys matching the pattern provided by --keys
@@ -60,4 +64,6 @@ USAGE:
 
 OPTIONS:
    --keys, -k 	keys pattern (passed to redis 'keys' command)
+   --match, -m 	regexp filter for key names
+   --invert, -v	invert match regexp
    
