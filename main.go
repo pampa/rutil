@@ -224,11 +224,16 @@ func main() {
             Name: "field, f",
             Usage:"hash fields to print (default all)",
           },
+          cli.BoolFlag {
+            Name: "json, j",
+            Usage:"attempt to parse and pretty print strings as json",
+          },
         },
         Action: func(c *cli.Context) {
           pat := c.String("keys")
           regex := c.String("match")
           inv   := c.Bool("invert")
+
           if pat == "" {
             checkErr("missing --keys pattern")
           }
@@ -236,7 +241,7 @@ func main() {
           keys, _ := r.getKeys(pat,regex,inv)
 
           for _, k := range keys {
-            r.printKey(k, c.StringSlice("field"))
+            r.printKey(k, c.StringSlice("field"),c.Bool("json"))
           }
         },
     },

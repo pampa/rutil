@@ -6,6 +6,7 @@ import (
   "io"
   "regexp"
   "encoding/binary"
+  "encoding/json"
   "github.com/mediocregopher/radix.v2/redis"
 )
 
@@ -160,7 +161,7 @@ func (r *rutil) restoreKey(d KeyDump, del bool, ignor bool) int {
   }
 }
 
-func (r *rutil) printKey(key string, fld []string) {
+func (r *rutil) printKey(key string, fld []string, json bool) {
   cli := r.Client()
   var res *redis.Resp
 
@@ -183,7 +184,7 @@ func (r *rutil) printKey(key string, fld []string) {
       checkErr(res.Err)
       hash, err := res.Map()
       checkErr(err)
-      fmt.Println("VAL:", hash, "\n")
+      ppHash(hash, json)
     } else {
       res = cli.Cmd("HMGET", key, fld)
       arr, err := res.List()
@@ -192,14 +193,14 @@ func (r *rutil) printKey(key string, fld []string) {
       for i, k := range fld {
         hash[k] = arr[i]
       }
-      fmt.Println("VAL:", hash, "\n")
+      ppHash(hash, json)
     }
   case "string":
     res = cli.Cmd("GET",key)
     checkErr(res.Err)
     str, err := res.Str()
     checkErr(err)
-    fmt.Println("VAL:", str, "\n")
+    ppString(str, json)
   case "zset":
     res = cli.Cmd("ZRANGE",key, 0, -1)
     checkErr(res.Err)
@@ -215,6 +216,42 @@ func (r *rutil) printKey(key string, fld []string) {
   default:
     checkErr(key_t)
   }
+}
+
+func ppString(s string, j bool) {
+  if j {
+    var b interface{}
+    err := json.Unmarshal([]byte(s),&b)
+    if err != nil {
+      fmt.Println("VAL:", s, "\n")
+    } else {
+      out, _ := json.MarshalIndent(b,"","\t")
+      fmt.Println(string(out), "\n")
+    }
+  } else {
+    fmt.Println("VAL:", s, "\n")
+  }
+}
+
+func ppHash(h map[string]string, j bool) {
+
+  hh := make(map[string]interface{})
+  for k, v := range h {
+    if j {
+      var b interface{}
+      err := json.Unmarshal([]byte(v), &b)
+      if err != nil {
+        hh[k] = v
+      } else {
+        hh[k] = b
+      }
+    } else {
+      hh[k] = v
+    }
+  }
+
+  out, _ := json.MarshalIndent(hh, "", "\t")
+  fmt.Println(string(out),"\n")
 }
 
 func checkErr(err interface{}) {

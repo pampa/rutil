@@ -68,4 +68,5 @@ OPTIONS:
    --match, -m 					regexp filter for key names
    --invert, -v					invert match regexp
    --field, -f [--field option --field option]	hash fields to print (default all)
+   --json, -j					attempt to parse and pretty print strings as json
    
