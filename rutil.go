@@ -160,7 +160,7 @@ func (r *rutil) restoreKey(d KeyDump, del bool, ignor bool) int {
   }
 }
 
-func (r *rutil) printKey(key string) {
+func (r *rutil) printKey(key string, fld []string) {
   cli := r.Client()
   var res *redis.Resp
 
@@ -178,11 +178,22 @@ func (r *rutil) printKey(key string) {
     checkErr(err)
     fmt.Println("VAL:", set, "\n")
   case "hash":
-    res = cli.Cmd("HGETALL", key)
-    checkErr(res.Err)
-    hash, err := res.Map()
-    fmt.Println("VAL:", hash, "\n")
-    checkErr(err)
+    if len(fld) == 0 {
+      res = cli.Cmd("HGETALL", key)
+      checkErr(res.Err)
+      hash, err := res.Map()
+      checkErr(err)
+      fmt.Println("VAL:", hash, "\n")
+    } else {
+      res = cli.Cmd("HMGET", key, fld)
+      arr, err := res.List()
+      checkErr(err)
+      hash := map[string]string{}
+      for i, k := range fld {
+        hash[k] = arr[i]
+      }
+      fmt.Println("VAL:", hash, "\n")
+    }
   case "string":
     res = cli.Cmd("GET",key)
     checkErr(res.Err)

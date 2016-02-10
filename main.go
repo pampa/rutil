@@ -220,6 +220,10 @@ func main() {
             Name: "invert, v",
             Usage:"invert match regexp",
           },
+          cli.StringSliceFlag {
+            Name: "field, f",
+            Usage:"hash fields to print (default all)",
+          },
         },
         Action: func(c *cli.Context) {
           pat := c.String("keys")
@@ -232,7 +236,7 @@ func main() {
           keys, _ := r.getKeys(pat,regex,inv)
 
           for _, k := range keys {
-            r.printKey(k)
+            r.printKey(k, c.StringSlice("field"))
           }
         },
     },

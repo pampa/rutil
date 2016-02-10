@@ -64,7 +64,8 @@ USAGE:
    rutil print [command options] [arguments...]
 
 OPTIONS:
-   --keys, -k 	keys pattern (passed to redis 'keys' command)
-   --match, -m 	regexp filter for key names
-   --invert, -v	invert match regexp
+   --keys, -k 					keys pattern (passed to redis 'keys' command)
+   --match, -m 					regexp filter for key names
+   --invert, -v					invert match regexp
+   --field, -f [--field option --field option]	hash fields to print (default all)
    
