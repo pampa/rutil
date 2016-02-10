@@ -46,7 +46,7 @@ func main() {
           cli.StringFlag {
             Name: "keys, k",
             Value: "*",
-            Usage: "dump keys that match the wildcard (passed to redis 'keys' command)",
+            Usage: "keys pattern (passed to redis 'keys' command)",
           },
           cli.BoolFlag {
             Name: "auto, a",
@@ -144,6 +144,61 @@ func main() {
             }
           }
           bar.FinishPrint(fmt.Sprintf("file: %s, keys: %d", args[0], i))
+        },
+    },
+    {
+      Name: "delete",
+      Aliases: []string{"del"},
+      Usage: "delete keys matching the pattern provided by --keys",
+      Flags: []cli.Flag {
+          cli.StringFlag {
+            Name: "keys, k",
+            Usage: "keys pattern (passed to redis 'keys' command)",
+          },
+          cli.BoolFlag {
+            Name: "yes",
+            Usage: "really delete keys, default is pretend to delete",
+          },
+        },
+        Action: func(c *cli.Context) {
+          yes := c.Bool("yes")
+          pat := c.String("keys")
+          if pat == "" {
+            checkErr("missing --keys pattern")
+          }
+
+          keys, _ := r.getKeys(pat)
+
+          for i, k := range keys {
+            fmt.Printf("%3d: %s\n",i,k)
+            if yes == true {
+              res := r.Client().Cmd("DEL", k)
+              checkErr(res.Err)
+            }
+          }
+        },
+    },
+    {
+      Name: "print",
+      Aliases: []string{"pp"},
+      Usage: "print keys matching the pattern provided by --keys",
+      Flags: []cli.Flag {
+          cli.StringFlag {
+            Name: "keys, k",
+            Usage: "keys pattern (passed to redis 'keys' command)",
+          },
+        },
+        Action: func(c *cli.Context) {
+          pat := c.String("keys")
+          if pat == "" {
+            checkErr("missing --keys pattern")
+          }
+
+          keys, _ := r.getKeys(pat)
+
+          for _, k := range keys {
+            r.printKey(k)
+          }
         },
     },
   }

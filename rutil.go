@@ -133,6 +133,52 @@ func (r *rutil) restoreKey(d KeyDump, del bool) {
   checkErr(res.Err)
 }
 
+func (r *rutil) printKey(key string) {
+  cli := r.Client()
+  var res *redis.Resp
+
+  res = cli.Cmd("TYPE", key)
+  checkErr(res.Err)
+  key_t, err := res.Str()
+  checkErr(err)
+
+  fmt.Printf("KEY: %s\nTYP: %s\n", key, key_t)
+  switch key_t {
+  case "set":
+    res = cli.Cmd("SMEMBERS", key)
+    checkErr(res.Err)
+    set, err := res.List()
+    checkErr(err)
+    fmt.Println("VAL:", set, "\n")
+  case "hash":
+    res = cli.Cmd("HGETALL", key)
+    checkErr(res.Err)
+    hash, err := res.Map()
+    fmt.Println("VAL:", hash, "\n")
+    checkErr(err)
+  case "string":
+    res = cli.Cmd("GET",key)
+    checkErr(res.Err)
+    str, err := res.Str()
+    checkErr(err)
+    fmt.Println("VAL:", str, "\n")
+  case "zset":
+    res = cli.Cmd("ZRANGE",key, 0, -1)
+    checkErr(res.Err)
+    set, err := res.List()
+    checkErr(err)
+    fmt.Println("VAL:", set, "\n")
+  case "list":
+    res = cli.Cmd("LRANGE",key, 0, -1)
+    checkErr(res.Err)
+    list, err := res.List()
+    checkErr(err)
+    fmt.Println("VAL:", list, "\n")
+  default:
+    checkErr(key_t)
+  }
+}
+
 func checkErr(err interface{}) {
   if err != nil {
     fmt.Println("ERROR:",err)
