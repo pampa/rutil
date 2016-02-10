@@ -12,7 +12,7 @@ var r rutil
 
 func main() {
   app := cli.NewApp()
-  app.Usage   = "redis multitool"
+  app.Usage   = "redis multitool utility"
   app.Version = "0.1.0"
   app.Flags = []cli.Flag {
     cli.StringFlag{
@@ -116,12 +116,17 @@ func main() {
             Name: "delete, d",
             Usage: "delete key before restoring",
           },
+          cli.BoolFlag {
+            Name: "ignore, g",
+            Usage: "ignore BUSYKEY restore errors",
+          },
         },
         Action: func(c *cli.Context) {
           args  := c.Args()
           dry   := c.Bool("dry-run")
           flush := c.Bool("flushdb")
           del   := c.Bool("delete")
+          ignor := c.Bool("ignore")
 
           if flush && del {
             checkErr("flush or delete?")
@@ -143,17 +148,17 @@ func main() {
           }
 
           bar := pb.StartNew(int(hd.Keys))
-          i := uint64(0)
-          for i = 0; i < hd.Keys; i++ {
+          keys_c := 0
+          for i := uint64(0); i < hd.Keys; i++ {
             bar.Increment()
             d := r.readDump(file)
             if dry == false {
               if dry == false {
-                r.restoreKey(d, del)
+                keys_c = keys_c + r.restoreKey(d, del, ignor)
               }
             }
           }
-          bar.FinishPrint(fmt.Sprintf("file: %s, keys: %d", args[0], i))
+          bar.FinishPrint(fmt.Sprintf("file: %s, keys: %d", args[0], keys_c))
         },
     },
     {
@@ -190,7 +195,7 @@ func main() {
           keys, _ := r.getKeys(pat,regex,inv)
 
           for i, k := range keys {
-            fmt.Printf("%3d: %s\n",i,k)
+            fmt.Printf("%3d: %s\n",i + 1,k)
             if yes == true {
               res := r.Client().Cmd("DEL", k)
               checkErr(res.Err)

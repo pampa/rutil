@@ -138,7 +138,7 @@ func (r *rutil) readDump(f io.Reader) KeyDump {
   return d
 }
 
-func (r *rutil) restoreKey(d KeyDump, del bool) {
+func (r *rutil) restoreKey(d KeyDump, del bool, ignor bool) int {
   cli := r.Client()
   var res *redis.Resp
 
@@ -148,7 +148,16 @@ func (r *rutil) restoreKey(d KeyDump, del bool) {
   }
 
   res = cli.Cmd("RESTORE", d.Key, d.Pttl ,d.Dump)
-  checkErr(res.Err)
+  if ignor == true {
+    if res.Err != nil {
+      return 0
+    } else {
+      return 1
+    }
+  } else {
+    checkErr(res.Err)
+    return 1
+  }
 }
 
 func (r *rutil) printKey(key string) {

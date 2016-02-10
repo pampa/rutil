@@ -1,5 +1,5 @@
 NAME:
-   rutil - redis multitool
+   rutil - redis multitool utility
 
 USAGE:
    rutil [global options] command [command options] [arguments...]
@@ -43,6 +43,7 @@ OPTIONS:
    --dry-run, -r	pretend to restore
    --flushdb, -f	flush the database before restoring
    --delete, -d		delete key before restoring
+   --ignore, -g		ignore BUSYKEY restore errors
    
 NAME:
    rutil delete - delete keys matching the pattern provided by --keys
