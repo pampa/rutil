@@ -102,7 +102,7 @@ func main() {
 		},
 		{
 			Name:  "restore",
-			Usage: "restore redis database from file",
+			Usage: "restore redis database from a file",
 			Flags: []cli.Flag{
 				cli.BoolFlag{
 					Name:  "dry-run, r",
