@@ -4,6 +4,10 @@ rutil is a small command line utility that lets you selectively dump,
 restore and query a redis database, peek into stored data and pretty 
 print json contents.
 
+# demo
+
+![rutil](https://raw.githubusercontent.com/pampa/rutil/master/demo.gif)
+
 # usage
 ```
 rutil [global options] command [command options] [arguments...]
