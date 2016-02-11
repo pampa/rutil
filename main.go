@@ -12,7 +12,7 @@ var r rutil
 
 func main() {
 	app := cli.NewApp()
-	app.Usage = "redis multitool utility"
+	app.Usage = "a collection of command line redis utils"
 	app.Version = "0.1.0"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
