@@ -10,7 +10,7 @@ gulp.task('install', function() {
 });
 
 gulp.task('readme', function() {
-  exec("rutil help > README.txt && rutil help dump >> README.txt && rutil help restore >> README.txt && rutil help delete >> README.txt && rutil help print >> README.txt", function () {
+  exec("rutil help > README.txt && rutil help dump >> README.txt && rutil help restore >> README.txt && rutil help query >> README.txt", function () {
   });
 });
 

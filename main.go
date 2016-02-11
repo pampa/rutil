@@ -162,51 +162,9 @@ func main() {
 			},
 		},
 		{
-			Name:    "delete",
-			Aliases: []string{"del"},
-			Usage:   "delete keys matching the pattern provided by --keys",
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "keys, k",
-					Usage: "keys pattern (passed to redis 'keys' command)",
-				},
-				cli.BoolFlag{
-					Name:  "yes",
-					Usage: "really delete keys, default is pretend to delete",
-				},
-				cli.StringFlag{
-					Name:  "match, m",
-					Usage: "regexp filter for key names",
-				},
-				cli.BoolFlag{
-					Name:  "invert, v",
-					Usage: "invert match regexp",
-				},
-			},
-			Action: func(c *cli.Context) {
-				yes := c.Bool("yes")
-				pat := c.String("keys")
-				regex := c.String("match")
-				inv := c.Bool("invert")
-				if pat == "" {
-					checkErr("missing --keys pattern")
-				}
-
-				keys, _ := r.getKeys(pat, regex, inv)
-
-				for i, k := range keys {
-					fmt.Printf("%3d: %s\n", i+1, k)
-					if yes == true {
-						res := r.Client().Cmd("DEL", k)
-						checkErr(res.Err)
-					}
-				}
-			},
-		},
-		{
-			Name:    "print",
-			Aliases: []string{"pp"},
-			Usage:   "print keys matching the pattern provided by --keys",
+			Name:    "query",
+			Aliases: []string{"q"},
+			Usage:   "query keys matching the pattern provided by --keys",
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "keys, k",
@@ -219,6 +177,14 @@ func main() {
 				cli.BoolFlag{
 					Name:  "invert, v",
 					Usage: "invert match regexp",
+				},
+				cli.BoolFlag{
+					Name:  "delete",
+					Usage: "delete keys",
+				},
+				cli.BoolFlag{
+					Name:  "print, p",
+					Usage: "print key values",
 				},
 				cli.StringSliceFlag{
 					Name:  "field, f",
@@ -233,15 +199,35 @@ func main() {
 				pat := c.String("keys")
 				regex := c.String("match")
 				inv := c.Bool("invert")
+				del := c.Bool("delete")
+				prnt := c.Bool("print")
+				flds := c.StringSlice("field")
+				json := c.Bool("json")
 
 				if pat == "" {
 					checkErr("missing --keys pattern")
 				}
 
+				if del && prnt {
+					checkErr("can't use --delete and --print together")
+				}
+
+				if (del || !prnt) && (json || len(flds) > 0) {
+					checkErr("use --json and --field with --print")
+				}
+
 				keys, _ := r.getKeys(pat, regex, inv)
 
-				for _, k := range keys {
-					r.printKey(k, c.StringSlice("field"), c.Bool("json"))
+				for i, k := range keys {
+					if prnt {
+						r.printKey(k, flds, json)
+					} else {
+						fmt.Printf("%d: %s\n", i+1, k)
+						if del == true {
+							res := r.Client().Cmd("DEL", k)
+							checkErr(res.Err)
+						}
+					}
 				}
 			},
 		},

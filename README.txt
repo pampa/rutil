@@ -9,9 +9,8 @@ VERSION:
    
 COMMANDS:
    dump		dump redis database to a file
-   restore	restore redis database from file
-   delete, del	delete keys matching the pattern provided by --keys
-   print, pp	print keys matching the pattern provided by --keys
+   restore	restore redis database from a file
+   query, q	query keys matching the pattern provided by --keys
    help, h	Shows a list of commands or help for one command
    
 GLOBAL OPTIONS:
@@ -34,7 +33,7 @@ OPTIONS:
    --invert, -v		invert match regexp
    
 NAME:
-   rutil restore - restore redis database from file
+   rutil restore - restore redis database from a file
 
 USAGE:
    rutil restore [command options] [arguments...]
@@ -46,27 +45,17 @@ OPTIONS:
    --ignore, -g		ignore BUSYKEY restore errors
    
 NAME:
-   rutil delete - delete keys matching the pattern provided by --keys
+   rutil query - query keys matching the pattern provided by --keys
 
 USAGE:
-   rutil delete [command options] [arguments...]
-
-OPTIONS:
-   --keys, -k 	keys pattern (passed to redis 'keys' command)
-   --yes	really delete keys, default is pretend to delete
-   --match, -m 	regexp filter for key names
-   --invert, -v	invert match regexp
-   
-NAME:
-   rutil print - print keys matching the pattern provided by --keys
-
-USAGE:
-   rutil print [command options] [arguments...]
+   rutil query [command options] [arguments...]
 
 OPTIONS:
    --keys, -k 					keys pattern (passed to redis 'keys' command)
    --match, -m 					regexp filter for key names
    --invert, -v					invert match regexp
+   --delete					delete keys
+   --print, -p					print key values
    --field, -f [--field option --field option]	hash fields to print (default all)
    --json, -j					attempt to parse and pretty print strings as json
    
