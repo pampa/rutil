@@ -8,11 +8,16 @@ print json contents.
 
 ![rutil](https://raw.githubusercontent.com/pampa/rutil/master/demo.gif)
 
+# installation
+```
+  go get -v github.com/pampa/rutil
+```
+
 # usage
 ```
 rutil [global options] command [command options] [arguments...]
 ```
-   
+
 # commands
 ```
 dump      dump redis database to a file
