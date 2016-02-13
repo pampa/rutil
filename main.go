@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/cheggaaa/pb"
 	"github.com/codegangsta/cli"
+	"io"
 	"os"
 	"time"
 )
@@ -48,10 +49,6 @@ func main() {
 					Value: "*",
 					Usage: "keys pattern (passed to redis 'keys' command)",
 				},
-				cli.BoolFlag{
-					Name:  "auto, a",
-					Usage: "make up a file name for the dump - redisYYYYMMDDHHMMSS.rdmp",
-				},
 				cli.StringFlag{
 					Name:  "match, m",
 					Usage: "regexp filter for key names",
@@ -60,44 +57,70 @@ func main() {
 					Name:  "invert, v",
 					Usage: "invert match regexp",
 				},
+				cli.BoolFlag{
+					Name:  "auto, a",
+					Usage: "make up a file name for the dump - redisYYYYMMDDHHMMSS.rdmp",
+				},
+				cli.BoolFlag{
+					Name:  "stdout, o",
+					Usage: "dump to stdout",
+				},
 			},
 			Action: func(c *cli.Context) {
 				args := c.Args()
 				auto := c.Bool("auto")
 				regex := c.String("match")
 				inv := c.Bool("invert")
+				out := c.Bool("stdout")
 
 				var fileName string
 
-				if len(args) == 0 && auto == false {
-					checkErr("provide a file name for the dump or use rutil dump --auto to make one up")
+				if len(args) == 0 && auto == false && out == false {
+					checkErr("provide a file name, --auto or --stdout")
 				} else if len(args) > 0 && auto == true {
 					checkErr("you can't provide a name and use --auto at the same time")
+				} else if len(args) > 0 && out == true {
+					checkErr("you can't provide a name and use --stdout at the same time")
+				} else if auto == true && out == true {
+					checkErr("you can't use --stdout  and --auto at the same time")
 				} else if len(args) == 1 && auto == false {
 					fileName = args[0]
 				} else if auto == true {
 					fileName = fmt.Sprintf("redis%s.rdmp", time.Now().Format("20060102150405"))
 				} else if len(args) > 1 {
 					checkErr("to many file names")
-				} else if fileName == "" {
+				} else if fileName == "" && out == false {
 					checkErr("brain damage. panic")
 				}
 
 				keys, keys_c := r.getKeys(c.String("keys"), regex, inv)
 
-				file, err := os.Create(fileName)
-				checkErr(err)
+				var file io.Writer
+				var err interface{}
+				if out {
+					file = os.Stdout
+				} else {
+					file, err = os.Create(fileName)
+					checkErr(err)
+				}
 
-				bar := pb.StartNew(keys_c)
+				var bar *pb.ProgressBar
+				if !out {
+					bar = pb.StartNew(keys_c)
+				}
 
 				totalBytes := r.writeHeader(file, keys_c)
 
 				for _, k := range keys {
-					bar.Increment()
+					if !out {
+						bar.Increment()
+					}
 					b := r.writeDump(file, r.dumpKey(k))
 					totalBytes = totalBytes + b
 				}
-				bar.FinishPrint(fmt.Sprintf("file: %s, keys: %d, bytes: %d", fileName, keys_c, totalBytes))
+				if !out {
+					bar.FinishPrint(fmt.Sprintf("file: %s, keys: %d, bytes: %d", fileName, keys_c, totalBytes))
+				}
 			},
 		},
 		{
@@ -120,6 +143,10 @@ func main() {
 					Name:  "ignore, g",
 					Usage: "ignore BUSYKEY restore errors",
 				},
+				cli.BoolFlag{
+					Name:  "stdin, i",
+					Usage: "read dump from stdin",
+				},
 			},
 			Action: func(c *cli.Context) {
 				args := c.Args()
@@ -127,19 +154,32 @@ func main() {
 				flush := c.Bool("flushdb")
 				del := c.Bool("delete")
 				ignor := c.Bool("ignore")
+				stdin := c.Bool("stdin")
 
 				if flush && del {
 					checkErr("flush or delete?")
 				}
 
-				if len(args) == 0 {
+				if len(args) == 0 && !stdin {
 					checkErr("no file name provided")
+				} else if len(args) > 0 && stdin {
+					checkErr("can't use --stdin with filename")
 				} else if len(args) > 1 {
 					checkErr("to many file names")
 				}
 
-				file, err := os.Open(args[0])
-				checkErr(err)
+				var file io.Reader
+				var fileName string
+
+				var err interface{}
+				if stdin {
+					fileName = "STDIN"
+					file = os.Stdin
+				} else {
+					fileName = args[0]
+					file, err = os.Open(fileName)
+					checkErr(err)
+				}
 				hd := r.readHeader(file)
 
 				if dry == false && flush == true {
@@ -158,7 +198,7 @@ func main() {
 						}
 					}
 				}
-				bar.FinishPrint(fmt.Sprintf("file: %s, keys: %d", args[0], keys_c))
+				bar.FinishPrint(fmt.Sprintf("file: %s, keys: %d", fileName, keys_c))
 			},
 		},
 		{

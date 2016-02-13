@@ -258,7 +258,7 @@ func ppHash(h map[string]string, j bool) {
 
 func checkErr(err interface{}) {
 	if err != nil {
-		fmt.Println("ERROR:", err)
+		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 		os.Exit(1)
 	}
 }
