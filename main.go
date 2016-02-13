@@ -63,7 +63,7 @@ func main() {
 				},
 				cli.BoolFlag{
 					Name:  "stdout, o",
-					Usage: "dump to stdout",
+					Usage: "dump to STDOUT",
 				},
 			},
 			Action: func(c *cli.Context) {
@@ -145,7 +145,7 @@ func main() {
 				},
 				cli.BoolFlag{
 					Name:  "stdin, i",
-					Usage: "read dump from stdin",
+					Usage: "read dump from STDIN",
 				},
 			},
 			Action: func(c *cli.Context) {

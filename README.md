@@ -45,9 +45,10 @@ rutil dump [command options] [arguments...]
 ## dump options
 ```
 --keys, -k "*"  keys pattern (passed to redis 'keys' command)
---auto, -a      make up a file name for the dump - redisYYYYMMDDHHMMSS.rdmp
 --match, -m     regexp filter for key names
 --invert, -v    invert match regexp
+--auto, -a      make up a file name for the dump - redisYYYYMMDDHHMMSS.rdmp
+--stdout, -o    dump to STDOUT
 ```
   
 # restore
@@ -61,6 +62,7 @@ rutil restore [command options] [arguments...]
 --flushdb, -f   flush the database before restoring
 --delete, -d    delete key before restoring
 --ignore, -g    ignore BUSYKEY restore errors
+--sidin, -i     read dump from STDIN
 
 ```
    
