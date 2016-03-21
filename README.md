@@ -62,7 +62,7 @@ rutil restore [command options] [arguments...]
 --flushdb, -f   flush the database before restoring
 --delete, -d    delete key before restoring
 --ignore, -g    ignore BUSYKEY restore errors
---sidin, -i     read dump from STDIN
+--stdin, -i     read dump from STDIN
 
 ```
    
