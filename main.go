@@ -61,10 +61,6 @@ func main() {
 					Name:  "auto, a",
 					Usage: "make up a file name for the dump - redisYYYYMMDDHHMMSS.rdmp",
 				},
-				cli.BoolFlag{
-					Name:  "stdout, o",
-					Usage: "dump to STDOUT",
-				},
 			},
 			Action: func(c *cli.Context) {
 				args := c.Args()
@@ -75,14 +71,10 @@ func main() {
 
 				var fileName string
 
-				if len(args) == 0 && auto == false && out == false {
-					fail("provide a file name, --auto or --stdout")
+				if len(args) == 0 && auto == false {
+					fail("provide a file name or --auto")
 				} else if len(args) > 0 && auto == true {
 					fail("you can't provide a name and use --auto at the same time")
-				} else if len(args) > 0 && out == true {
-					fail("you can't provide a name and use --stdout at the same time")
-				} else if auto == true && out == true {
-					fail("you can't use --stdout  and --auto at the same time")
 				} else if len(args) == 1 && auto == false {
 					fileName = args[0]
 				} else if auto == true {
@@ -95,35 +87,30 @@ func main() {
 
 				keys, keys_c := r.getKeys(c.String("keys"), regex, inv)
 
-				var file io.Writer
-				var err interface{}
-				if out {
-					file = os.Stdout
-				} else {
-					file, err = os.Create(fileName)
-					checkErr(err, "create " + fileName)
-				}
+        file, err := os.Create(fileName)
+				checkErr(err, "create " + fileName)
 
-				var bar *pb.ProgressBar
-				if !out {
-					bar = pb.StartNew(keys_c)
-				}
+        bar := pb.StartNew(keys_c)
 
 				totalBytes := r.writeHeader(file, keys_c)
 
+        expired := 0
+        keys_c  = 0
 				for _, k := range keys {
-					if !out {
-						bar.Increment()
-					}
+					bar.Increment()
           var ok, kd = r.dumpKey(k)
           if ok {
 					  b := r.writeDump(file, kd)
 					  totalBytes = totalBytes + b
+            keys_c += 1
+          } else {
+            expired += 1
           }
         }
-				if !out {
-					bar.FinishPrint(fmt.Sprintf("file: %s, keys: %d, bytes: %d", fileName, keys_c, totalBytes))
-				}
+        file.Seek(0,0)
+				r.writeHeader(file, keys_c)
+
+        bar.FinishPrint(fmt.Sprintf("file: %s, keys: %d, expired: %d, bytes: %d", fileName, keys_c, expired, totalBytes))
 			},
 		},
 		{
@@ -194,7 +181,7 @@ func main() {
 				keys_c := 0
 				for i := uint64(0); i < hd.Keys; i++ {
 					bar.Increment()
-					d := r.readDump(file)
+					_, d := r.readDump(file)
 					if dry == false {
 						if dry == false {
 							keys_c = keys_c + r.restoreKey(d, del, ignor)

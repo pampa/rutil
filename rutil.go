@@ -130,18 +130,23 @@ func (r *rutil) writeDump(f io.Writer, d KeyDump) int {
 	return size
 }
 
-func (r *rutil) readDump(f io.Reader) KeyDump {
+func (r *rutil) readDump(f io.Reader) (bool, KeyDump) {
 	var d KeyDump
 
-	binary.Read(f, binary.BigEndian, &d.Pttl)
-	binary.Read(f, binary.BigEndian, &d.KeyL)
+  err := binary.Read(f, binary.BigEndian, &d.Pttl)
+  checkErr(err, "binary.Read d.Pttl")
+	err = binary.Read(f, binary.BigEndian, &d.KeyL)
+  checkErr(err, "binary.Read d.KeyL")
 	d.Key = make([]byte, d.KeyL)
-	binary.Read(f, binary.BigEndian, &d.Key)
-	binary.Read(f, binary.BigEndian, &d.DumpL)
+	err = binary.Read(f, binary.BigEndian, &d.Key)
+  checkErr(err, "binary.Read d.Key")
+	err = binary.Read(f, binary.BigEndian, &d.DumpL)
+  checkErr(err, "binary.Read d.DumpL")
 	d.Dump = make([]byte, d.DumpL)
-	binary.Read(f, binary.BigEndian, &d.Dump)
+	err = binary.Read(f, binary.BigEndian, &d.Dump)
+  checkErr(err, "binary.Read d.Dump")
 
-	return d
+	return false, d
 }
 
 func (r *rutil) restoreKey(d KeyDump, del bool, ignor bool) int {
