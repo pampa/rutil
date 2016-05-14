@@ -14,7 +14,7 @@ var r rutil
 func main() {
 	app := cli.NewApp()
 	app.Usage = "a collection of command line redis utils"
-	app.Version = "0.1.0"
+	app.Version = "0.1.1"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "host, s",
