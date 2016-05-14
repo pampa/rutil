@@ -71,7 +71,7 @@ func invertibleMatch(s string, r string, v bool) bool {
 	}
 }
 
-func (r *rutil) dumpKey(k string) KeyDump {
+func (r *rutil) dumpKey(k string) (bool, KeyDump) {
 	d := KeyDump{
 		Key:  []byte(k),
 		KeyL: uint64(len(k)),
@@ -81,9 +81,12 @@ func (r *rutil) dumpKey(k string) KeyDump {
 	res := cli.Cmd("PTTL", k)
 	checkErr(res.Err, "PTTL " + k)
 	d.Pttl, err = res.Int64()
-	if d.Pttl < 0 {
-		d.Pttl = 0
-	}
+	if d.Pttl == -2 {
+	  fmt.Printf("EXPIRED: %s\n", k)
+    return false, d 
+  } else if d.Pttl == -1 {
+    d.Pttl = 0
+  }
 	checkErr(err, "PTTL " + k + " res.Int64()")
 
 	res = cli.Cmd("DUMP", k)
@@ -92,7 +95,7 @@ func (r *rutil) dumpKey(k string) KeyDump {
 	checkErr(err, "DUMP " + k + " res.Bytes()")
 	d.DumpL = uint64(len(d.Dump))
 
-	return d
+	return true, d
 }
 
 func (r *rutil) writeHeader(f io.Writer, keys_c int) int {

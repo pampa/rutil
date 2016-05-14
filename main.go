@@ -115,9 +115,12 @@ func main() {
 					if !out {
 						bar.Increment()
 					}
-					b := r.writeDump(file, r.dumpKey(k))
-					totalBytes = totalBytes + b
-				}
+          var ok, kd = r.dumpKey(k)
+          if ok {
+					  b := r.writeDump(file, kd)
+					  totalBytes = totalBytes + b
+          }
+        }
 				if !out {
 					bar.FinishPrint(fmt.Sprintf("file: %s, keys: %d, bytes: %d", fileName, keys_c, totalBytes))
 				}
