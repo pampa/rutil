@@ -34,10 +34,10 @@ type FileHeader struct {
 func (r *rutil) Client() *redis.Client {
 	if r.cli == nil {
 		cli, err := redis.Dial("tcp", fmt.Sprintf("%s:%d", r.Host, r.Port))
-		checkErr(err)
+    checkErr(err, "CONNECT " + fmt.Sprintf("%s:%d"))
 		if r.Auth != "" {
 			res := cli.Cmd("AUTH", r.Auth)
-			checkErr(res.Err)
+			checkErr(res.Err, "AUTH")
 		}
 		r.cli = cli
 	}
@@ -46,9 +46,9 @@ func (r *rutil) Client() *redis.Client {
 
 func (r *rutil) getKeys(wcard string, regex string, invert bool) ([]string, int) {
 	res := r.Client().Cmd("KEYS", wcard)
-	checkErr(res.Err)
+  checkErr(res.Err, "KEYS " + wcard)
 	l, err := res.List()
-	checkErr(err)
+	checkErr(err, "KEYS " + wcard + " res.List()")
 	vsf := make([]string, 0)
 	for _, v := range l {
 		if invertibleMatch(v, regex, invert) {
@@ -79,17 +79,17 @@ func (r *rutil) dumpKey(k string) KeyDump {
 	var err interface{}
 	cli := r.Client()
 	res := cli.Cmd("PTTL", k)
-	checkErr(res.Err)
+	checkErr(res.Err, "PTTL " + k)
 	d.Pttl, err = res.Int64()
 	if d.Pttl < 0 {
 		d.Pttl = 0
 	}
-	checkErr(err)
+	checkErr(err, "PTTL " + k + " res.Int64()")
 
 	res = cli.Cmd("DUMP", k)
-	checkErr(res.Err)
+	checkErr(res.Err, "DUMP " + k)
 	d.Dump, err = res.Bytes()
-	checkErr(err)
+	checkErr(err, "DUMP " + k + " res.Bytes()")
 	d.DumpL = uint64(len(d.Dump))
 
 	return d
@@ -102,7 +102,7 @@ func (r *rutil) writeHeader(f io.Writer, keys_c int) int {
 		Keys:    uint64(keys_c),
 	}
 
-	checkErr(binary.Write(f, binary.BigEndian, h))
+	checkErr(binary.Write(f, binary.BigEndian, h), "writeHeader")
 	return binary.Size(h)
 }
 
@@ -119,11 +119,11 @@ func (r *rutil) writeDump(f io.Writer, d KeyDump) int {
 		binary.Size(d.DumpL) +
 		binary.Size(d.Dump)
 
-	checkErr(binary.Write(f, binary.BigEndian, d.Pttl))
-	checkErr(binary.Write(f, binary.BigEndian, d.KeyL))
-	checkErr(binary.Write(f, binary.BigEndian, d.Key))
-	checkErr(binary.Write(f, binary.BigEndian, d.DumpL))
-	checkErr(binary.Write(f, binary.BigEndian, d.Dump))
+	checkErr(binary.Write(f, binary.BigEndian, d.Pttl), "write d.Pttl")
+	checkErr(binary.Write(f, binary.BigEndian, d.KeyL), "write d.KeyL")
+  checkErr(binary.Write(f, binary.BigEndian, d.Key),  "write d.Key")
+	checkErr(binary.Write(f, binary.BigEndian, d.DumpL),"write d.DumpL")
+	checkErr(binary.Write(f, binary.BigEndian, d.Dump), "write d.Dump")
 	return size
 }
 
@@ -147,7 +147,7 @@ func (r *rutil) restoreKey(d KeyDump, del bool, ignor bool) int {
 
 	if del {
 		res = cli.Cmd("DEL", d.Key)
-		checkErr(res.Err)
+		checkErr(res.Err, "DEL " + string(d.Key))
 	}
 
 	res = cli.Cmd("RESTORE", d.Key, d.Pttl, d.Dump)
@@ -158,7 +158,7 @@ func (r *rutil) restoreKey(d KeyDump, del bool, ignor bool) int {
 			return 1
 		}
 	} else {
-		checkErr(res.Err)
+    checkErr(res.Err, "RESTORE " + string(d.Key))
 		return 1
 	}
 }
@@ -168,29 +168,30 @@ func (r *rutil) printKey(key string, fld []string, json bool) {
 	var res *redis.Resp
 
 	res = cli.Cmd("TYPE", key)
-	checkErr(res.Err)
+	checkErr(res.Err, "TYPE " + key)
 	key_t, err := res.Str()
-	checkErr(err)
+	checkErr(err, "TYPE " + key + " res.Str()")
 
 	fmt.Printf("KEY: %s\nTYP: %s\n", key, key_t)
 	switch key_t {
 	case "set":
 		res = cli.Cmd("SMEMBERS", key)
-		checkErr(res.Err)
+		checkErr(res.Err,"SMEMBERS" + key)
 		set, err := res.List()
-		checkErr(err)
+		checkErr(err, "SMEMBERS " + key + " res.List()")
 		fmt.Println("VAL:", set, "\n")
 	case "hash":
 		if len(fld) == 0 {
 			res = cli.Cmd("HGETALL", key)
-			checkErr(res.Err)
+			checkErr(res.Err, "HGETALL " + key)
 			hash, err := res.Map()
-			checkErr(err)
+			checkErr(err, "HGETALL " + key + " res.Map()")
 			ppHash(hash, json)
 		} else {
 			res = cli.Cmd("HMGET", key, fld)
+			checkErr(res.Err, "HMGET " + key)
 			arr, err := res.List()
-			checkErr(err)
+			checkErr(err, "HMGET " + key + " res.List()")
 			hash := map[string]string{}
 			for i, k := range fld {
 				hash[k] = arr[i]
@@ -199,24 +200,24 @@ func (r *rutil) printKey(key string, fld []string, json bool) {
 		}
 	case "string":
 		res = cli.Cmd("GET", key)
-		checkErr(res.Err)
+		checkErr(res.Err, "GET " + key)
 		str, err := res.Str()
-		checkErr(err)
+		checkErr(err, "GET " + key + " res.Str()")
 		ppString(str, json)
 	case "zset":
 		res = cli.Cmd("ZRANGE", key, 0, -1)
-		checkErr(res.Err)
+		checkErr(res.Err, "ZRANGE " + key)
 		set, err := res.List()
-		checkErr(err)
+		checkErr(err, "ZRANGE " + key + " res.List()")
 		fmt.Println("VAL:", set, "\n")
 	case "list":
 		res = cli.Cmd("LRANGE", key, 0, -1)
-		checkErr(res.Err)
+		checkErr(res.Err, "LRANGE " + key)
 		list, err := res.List()
-		checkErr(err)
+    checkErr(err, "LRANGE " + key + " res.List()")
 		fmt.Println("VAL:", list, "\n")
 	default:
-		checkErr(key_t)
+		fail(key_t)
 	}
 }
 
@@ -256,9 +257,14 @@ func ppHash(h map[string]string, j bool) {
 	fmt.Println(string(out), "\n")
 }
 
-func checkErr(err interface{}) {
+func fail(message string) {
+		fmt.Fprintf(os.Stderr, "ERROR: %s\n", message)
+		os.Exit(1)
+}
+
+func checkErr(err interface{}, action string) {
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
+		fmt.Fprintf(os.Stderr, "ERROR: %s at %s\n", err, action)
 		os.Exit(1)
 	}
 }

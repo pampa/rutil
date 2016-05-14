@@ -76,21 +76,21 @@ func main() {
 				var fileName string
 
 				if len(args) == 0 && auto == false && out == false {
-					checkErr("provide a file name, --auto or --stdout")
+					fail("provide a file name, --auto or --stdout")
 				} else if len(args) > 0 && auto == true {
-					checkErr("you can't provide a name and use --auto at the same time")
+					fail("you can't provide a name and use --auto at the same time")
 				} else if len(args) > 0 && out == true {
-					checkErr("you can't provide a name and use --stdout at the same time")
+					fail("you can't provide a name and use --stdout at the same time")
 				} else if auto == true && out == true {
-					checkErr("you can't use --stdout  and --auto at the same time")
+					fail("you can't use --stdout  and --auto at the same time")
 				} else if len(args) == 1 && auto == false {
 					fileName = args[0]
 				} else if auto == true {
 					fileName = fmt.Sprintf("redis%s.rdmp", time.Now().Format("20060102150405"))
 				} else if len(args) > 1 {
-					checkErr("to many file names")
+					fail("to many file names")
 				} else if fileName == "" && out == false {
-					checkErr("brain damage. panic")
+					fail("brain damage. panic")
 				}
 
 				keys, keys_c := r.getKeys(c.String("keys"), regex, inv)
@@ -101,7 +101,7 @@ func main() {
 					file = os.Stdout
 				} else {
 					file, err = os.Create(fileName)
-					checkErr(err)
+					checkErr(err, "create " + fileName)
 				}
 
 				var bar *pb.ProgressBar
@@ -157,15 +157,15 @@ func main() {
 				stdin := c.Bool("stdin")
 
 				if flush && del {
-					checkErr("flush or delete?")
+					fail("flush or delete?")
 				}
 
 				if len(args) == 0 && !stdin {
-					checkErr("no file name provided")
+					fail("no file name provided")
 				} else if len(args) > 0 && stdin {
-					checkErr("can't use --stdin with filename")
+					fail("can't use --stdin with filename")
 				} else if len(args) > 1 {
-					checkErr("to many file names")
+					fail("to many file names")
 				}
 
 				var file io.Reader
@@ -178,13 +178,13 @@ func main() {
 				} else {
 					fileName = args[0]
 					file, err = os.Open(fileName)
-					checkErr(err)
+					checkErr(err, "open r " + fileName)
 				}
 				hd := r.readHeader(file)
 
 				if dry == false && flush == true {
 					res := r.Client().Cmd("FLUSHDB")
-					checkErr(res.Err)
+					checkErr(res.Err, "FLUSHDB")
 				}
 
 				bar := pb.StartNew(int(hd.Keys))
@@ -245,15 +245,15 @@ func main() {
 				json := c.Bool("json")
 
 				if pat == "" {
-					checkErr("missing --keys pattern")
+					fail("missing --keys pattern")
 				}
 
 				if del && prnt {
-					checkErr("can't use --delete and --print together")
+					fail("can't use --delete and --print together")
 				}
 
 				if (del || !prnt) && (json || len(flds) > 0) {
-					checkErr("use --json and --field with --print")
+					fail("use --json and --field with --print")
 				}
 
 				keys, _ := r.getKeys(pat, regex, inv)
@@ -265,7 +265,7 @@ func main() {
 						fmt.Printf("%d: %s\n", i+1, k)
 						if del == true {
 							res := r.Client().Cmd("DEL", k)
-							checkErr(res.Err)
+							checkErr(res.Err, "DEL " + k)
 						}
 					}
 				}
