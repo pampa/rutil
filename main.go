@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/cheggaaa/pb"
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 	"io"
 	"os"
 	"time"
@@ -62,7 +62,7 @@ func main() {
 					Usage: "make up a file name for the dump - redisYYYYMMDDHHMMSS.rdmp",
 				},
 			},
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				args := c.Args()
 				auto := c.Bool("auto")
 				regex := c.String("match")
@@ -111,7 +111,8 @@ func main() {
 				r.writeHeader(file, keys_c)
 
         bar.FinishPrint(fmt.Sprintf("file: %s, keys: %d, expired: %d, bytes: %d", fileName, keys_c, expired, totalBytes))
-			},
+			  return nil
+      },
 		},
 		{
 			Name:  "restore",
@@ -138,7 +139,7 @@ func main() {
 					Usage: "read dump from STDIN",
 				},
 			},
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				args := c.Args()
 				dry := c.Bool("dry-run")
 				flush := c.Bool("flushdb")
@@ -189,6 +190,7 @@ func main() {
 					}
 				}
 				bar.FinishPrint(fmt.Sprintf("file: %s, keys: %d", fileName, keys_c))
+        return nil
 			},
 		},
 		{
@@ -225,7 +227,7 @@ func main() {
 					Usage: "attempt to parse and pretty print strings as json",
 				},
 			},
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				pat := c.String("keys")
 				regex := c.String("match")
 				inv := c.Bool("invert")
@@ -259,6 +261,7 @@ func main() {
 						}
 					}
 				}
+        return nil
 			},
 		},
 	}
