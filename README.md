@@ -21,6 +21,7 @@ rutil [global options] command [command options] [arguments...]
 # commands
 ```
 dump      dump redis database to a file
+pipe      dump a redis database to stdout in a format compatible with | redis-cli --pipe
 restore   restore redis database from a file
 query, q  query keys matching the pattern provided by --keys
 help, h   Shows a list of commands or help for one command
@@ -48,6 +49,20 @@ rutil dump [command options] [arguments...]
 --match, -m     regexp filter for key names
 --invert, -v    invert match regexp
 --auto, -a      make up a file name for the dump - redisYYYYMMDDHHMMSS.rdmp
+
+```
+
+# pipe
+
+```
+rutil pipe [command options] [arguments...]
+
+```
+## pipe options
+```
+--keys, -k "*"  keys pattern (passed to redis 'keys' command)
+--match, -m     regexp filter for key names
+--invert, -v    invert match regexp
 
 ```
   

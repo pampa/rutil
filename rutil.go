@@ -276,3 +276,19 @@ func checkErr(err interface{}, action string) {
 		os.Exit(1)
 	}
 }
+
+func genRespProto(a... interface{}) {
+  fmt.Printf("*%d\r\n",len(a))
+	for _, e := range a {
+    switch v := e.(type) {
+    case string:
+      fmt.Printf("$%d\r\n%s\r\n",len(v),v)
+    case []byte:
+      fmt.Printf("$%d\r\n%s\r\n",len(v),v)
+    case int64:
+      fmt.Printf("$%d\r\n%d\r\n",len(fmt.Sprintf("%d",v)),v)
+    default:
+      fail("error generating redis resp proto") 
+    }
+  }
+}

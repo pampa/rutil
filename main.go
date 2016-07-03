@@ -14,7 +14,7 @@ var r rutil
 func main() {
 	app := cli.NewApp()
 	app.Usage = "a collection of command line redis utils"
-	app.Version = "0.1.1"
+	app.Version = "0.1.2"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "host, s",
@@ -67,7 +67,6 @@ func main() {
 				auto := c.Bool("auto")
 				regex := c.String("match")
 				inv := c.Bool("invert")
-				out := c.Bool("stdout")
 
 				var fileName string
 
@@ -81,8 +80,6 @@ func main() {
 					fileName = fmt.Sprintf("redis%s.rdmp", time.Now().Format("20060102150405"))
 				} else if len(args) > 1 {
 					fail("to many file names")
-				} else if fileName == "" && out == false {
-					fail("brain damage. panic")
 				}
 
 				keys, keys_c := r.getKeys(c.String("keys"), regex, inv)
@@ -112,6 +109,36 @@ func main() {
 
         bar.FinishPrint(fmt.Sprintf("file: %s, keys: %d, expired: %d, bytes: %d", fileName, keys_c, expired, totalBytes))
 			  return nil
+      },
+		},
+		{
+			Name:  "pipe",
+			Usage: "dump a redis database to stdout in a format compatible with | redis-cli --pipe",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "keys, k",
+					Value: "*",
+					Usage: "keys pattern (passed to redis 'keys' command)",
+				},
+				cli.StringFlag{
+					Name:  "match, m",
+					Usage: "regexp filter for key names",
+				},
+				cli.BoolFlag{
+					Name:  "invert, v",
+					Usage: "invert match regexp",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				keys, _ := r.getKeys(c.String("keys"),c.String("match"),c.Bool("invert"))
+
+				for _, k := range keys {
+          ok, kd := r.dumpKey(k)
+          if(ok) {
+            genRespProto("RESTORE", kd.Key, kd.Pttl, kd.Dump)
+          }
+        }
+        return nil
       },
 		},
 		{
