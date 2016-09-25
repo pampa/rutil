@@ -84,32 +84,32 @@ func main() {
 
 				keys, keys_c := r.getKeys(c.String("keys"), regex, inv)
 
-        file, err := os.Create(fileName)
-				checkErr(err, "create " + fileName)
+				file, err := os.Create(fileName)
+				checkErr(err, "create "+fileName)
 
-        bar := pb.StartNew(keys_c)
+				bar := pb.StartNew(keys_c)
 
 				totalBytes := r.writeHeader(file, keys_c)
 
-        expired := 0
-        keys_c  = 0
+				expired := 0
+				keys_c = 0
 				for _, k := range keys {
 					bar.Increment()
-          var ok, kd = r.dumpKey(k)
-          if ok {
-					  b := r.writeDump(file, kd)
-					  totalBytes = totalBytes + b
-            keys_c += 1
-          } else {
-            expired += 1
-          }
-        }
-        file.Seek(0,0)
+					var ok, kd = r.dumpKey(k)
+					if ok {
+						b := r.writeDump(file, kd)
+						totalBytes = totalBytes + b
+						keys_c += 1
+					} else {
+						expired += 1
+					}
+				}
+				file.Seek(0, 0)
 				r.writeHeader(file, keys_c)
 
-        bar.FinishPrint(fmt.Sprintf("file: %s, keys: %d, expired: %d, bytes: %d", fileName, keys_c, expired, totalBytes))
-			  return nil
-      },
+				bar.FinishPrint(fmt.Sprintf("file: %s, keys: %d, expired: %d, bytes: %d", fileName, keys_c, expired, totalBytes))
+				return nil
+			},
 		},
 		{
 			Name:  "pipe",
@@ -130,16 +130,16 @@ func main() {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				keys, _ := r.getKeys(c.String("keys"),c.String("match"),c.Bool("invert"))
+				keys, _ := r.getKeys(c.String("keys"), c.String("match"), c.Bool("invert"))
 
 				for _, k := range keys {
-          ok, kd := r.dumpKey(k)
-          if(ok) {
-            genRespProto("RESTORE", kd.Key, kd.Pttl, kd.Dump)
-          }
-        }
-        return nil
-      },
+					ok, kd := r.dumpKey(k)
+					if ok {
+						genRespProto("RESTORE", kd.Key, kd.Pttl, kd.Dump)
+					}
+				}
+				return nil
+			},
 		},
 		{
 			Name:  "restore",
@@ -196,7 +196,7 @@ func main() {
 				} else {
 					fileName = args[0]
 					file, err = os.Open(fileName)
-					checkErr(err, "open r " + fileName)
+					checkErr(err, "open r "+fileName)
 				}
 				hd := r.readHeader(file)
 
@@ -217,7 +217,7 @@ func main() {
 					}
 				}
 				bar.FinishPrint(fmt.Sprintf("file: %s, keys: %d", fileName, keys_c))
-        return nil
+				return nil
 			},
 		},
 		{
@@ -284,11 +284,11 @@ func main() {
 						fmt.Printf("%d: %s\n", i+1, k)
 						if del == true {
 							res := r.Client().Cmd("DEL", k)
-							checkErr(res.Err, "DEL " + k)
+							checkErr(res.Err, "DEL "+k)
 						}
 					}
 				}
-        return nil
+				return nil
 			},
 		},
 	}

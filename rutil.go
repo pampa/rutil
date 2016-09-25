@@ -34,7 +34,7 @@ type FileHeader struct {
 func (r *rutil) Client() *redis.Client {
 	if r.cli == nil {
 		cli, err := redis.Dial("tcp", fmt.Sprintf("%s:%d", r.Host, r.Port))
-    checkErr(err, "CONNECT " + fmt.Sprintf("%s:%d"))
+		checkErr(err, "CONNECT "+fmt.Sprintf("%s:%d"))
 		if r.Auth != "" {
 			res := cli.Cmd("AUTH", r.Auth)
 			checkErr(res.Err, "AUTH")
@@ -46,9 +46,9 @@ func (r *rutil) Client() *redis.Client {
 
 func (r *rutil) getKeys(wcard string, regex string, invert bool) ([]string, int) {
 	res := r.Client().Cmd("KEYS", wcard)
-  checkErr(res.Err, "KEYS " + wcard)
+	checkErr(res.Err, "KEYS "+wcard)
 	l, err := res.List()
-	checkErr(err, "KEYS " + wcard + " res.List()")
+	checkErr(err, "KEYS "+wcard+" res.List()")
 	vsf := make([]string, 0)
 	for _, v := range l {
 		if invertibleMatch(v, regex, invert) {
@@ -79,20 +79,20 @@ func (r *rutil) dumpKey(k string) (bool, KeyDump) {
 	var err interface{}
 	cli := r.Client()
 	res := cli.Cmd("PTTL", k)
-	checkErr(res.Err, "PTTL " + k)
+	checkErr(res.Err, "PTTL "+k)
 	d.Pttl, err = res.Int64()
 	if d.Pttl == -2 {
-	  fmt.Printf("EXPIRED: %s\n", k)
-    return false, d 
-  } else if d.Pttl == -1 {
-    d.Pttl = 0
-  }
-	checkErr(err, "PTTL " + k + " res.Int64()")
+		fmt.Printf("EXPIRED: %s\n", k)
+		return false, d
+	} else if d.Pttl == -1 {
+		d.Pttl = 0
+	}
+	checkErr(err, "PTTL "+k+" res.Int64()")
 
 	res = cli.Cmd("DUMP", k)
-	checkErr(res.Err, "DUMP " + k)
+	checkErr(res.Err, "DUMP "+k)
 	d.Dump, err = res.Bytes()
-	checkErr(err, "DUMP " + k + " res.Bytes()")
+	checkErr(err, "DUMP "+k+" res.Bytes()")
 	d.DumpL = uint64(len(d.Dump))
 
 	return true, d
@@ -124,8 +124,8 @@ func (r *rutil) writeDump(f io.Writer, d KeyDump) int {
 
 	checkErr(binary.Write(f, binary.BigEndian, d.Pttl), "write d.Pttl")
 	checkErr(binary.Write(f, binary.BigEndian, d.KeyL), "write d.KeyL")
-  checkErr(binary.Write(f, binary.BigEndian, d.Key),  "write d.Key")
-	checkErr(binary.Write(f, binary.BigEndian, d.DumpL),"write d.DumpL")
+	checkErr(binary.Write(f, binary.BigEndian, d.Key), "write d.Key")
+	checkErr(binary.Write(f, binary.BigEndian, d.DumpL), "write d.DumpL")
 	checkErr(binary.Write(f, binary.BigEndian, d.Dump), "write d.Dump")
 	return size
 }
@@ -133,18 +133,18 @@ func (r *rutil) writeDump(f io.Writer, d KeyDump) int {
 func (r *rutil) readDump(f io.Reader) (bool, KeyDump) {
 	var d KeyDump
 
-  err := binary.Read(f, binary.BigEndian, &d.Pttl)
-  checkErr(err, "binary.Read d.Pttl")
+	err := binary.Read(f, binary.BigEndian, &d.Pttl)
+	checkErr(err, "binary.Read d.Pttl")
 	err = binary.Read(f, binary.BigEndian, &d.KeyL)
-  checkErr(err, "binary.Read d.KeyL")
+	checkErr(err, "binary.Read d.KeyL")
 	d.Key = make([]byte, d.KeyL)
 	err = binary.Read(f, binary.BigEndian, &d.Key)
-  checkErr(err, "binary.Read d.Key")
+	checkErr(err, "binary.Read d.Key")
 	err = binary.Read(f, binary.BigEndian, &d.DumpL)
-  checkErr(err, "binary.Read d.DumpL")
+	checkErr(err, "binary.Read d.DumpL")
 	d.Dump = make([]byte, d.DumpL)
 	err = binary.Read(f, binary.BigEndian, &d.Dump)
-  checkErr(err, "binary.Read d.Dump")
+	checkErr(err, "binary.Read d.Dump")
 
 	return false, d
 }
@@ -155,7 +155,7 @@ func (r *rutil) restoreKey(d KeyDump, del bool, ignor bool) int {
 
 	if del {
 		res = cli.Cmd("DEL", d.Key)
-		checkErr(res.Err, "DEL " + string(d.Key))
+		checkErr(res.Err, "DEL "+string(d.Key))
 	}
 
 	res = cli.Cmd("RESTORE", d.Key, d.Pttl, d.Dump)
@@ -166,7 +166,7 @@ func (r *rutil) restoreKey(d KeyDump, del bool, ignor bool) int {
 			return 1
 		}
 	} else {
-    checkErr(res.Err, "RESTORE " + string(d.Key))
+		checkErr(res.Err, "RESTORE "+string(d.Key))
 		return 1
 	}
 }
@@ -176,30 +176,30 @@ func (r *rutil) printKey(key string, fld []string, json bool) {
 	var res *redis.Resp
 
 	res = cli.Cmd("TYPE", key)
-	checkErr(res.Err, "TYPE " + key)
+	checkErr(res.Err, "TYPE "+key)
 	key_t, err := res.Str()
-	checkErr(err, "TYPE " + key + " res.Str()")
+	checkErr(err, "TYPE "+key+" res.Str()")
 
 	fmt.Printf("KEY: %s\nTYP: %s\n", key, key_t)
 	switch key_t {
 	case "set":
 		res = cli.Cmd("SMEMBERS", key)
-		checkErr(res.Err,"SMEMBERS" + key)
+		checkErr(res.Err, "SMEMBERS"+key)
 		set, err := res.List()
-		checkErr(err, "SMEMBERS " + key + " res.List()")
+		checkErr(err, "SMEMBERS "+key+" res.List()")
 		fmt.Println("VAL:", set, "\n")
 	case "hash":
 		if len(fld) == 0 {
 			res = cli.Cmd("HGETALL", key)
-			checkErr(res.Err, "HGETALL " + key)
+			checkErr(res.Err, "HGETALL "+key)
 			hash, err := res.Map()
-			checkErr(err, "HGETALL " + key + " res.Map()")
+			checkErr(err, "HGETALL "+key+" res.Map()")
 			ppHash(hash, json)
 		} else {
 			res = cli.Cmd("HMGET", key, fld)
-			checkErr(res.Err, "HMGET " + key)
+			checkErr(res.Err, "HMGET "+key)
 			arr, err := res.List()
-			checkErr(err, "HMGET " + key + " res.List()")
+			checkErr(err, "HMGET "+key+" res.List()")
 			hash := map[string]string{}
 			for i, k := range fld {
 				hash[k] = arr[i]
@@ -208,21 +208,21 @@ func (r *rutil) printKey(key string, fld []string, json bool) {
 		}
 	case "string":
 		res = cli.Cmd("GET", key)
-		checkErr(res.Err, "GET " + key)
+		checkErr(res.Err, "GET "+key)
 		str, err := res.Str()
-		checkErr(err, "GET " + key + " res.Str()")
+		checkErr(err, "GET "+key+" res.Str()")
 		ppString(str, json)
 	case "zset":
 		res = cli.Cmd("ZRANGE", key, 0, -1)
-		checkErr(res.Err, "ZRANGE " + key)
+		checkErr(res.Err, "ZRANGE "+key)
 		set, err := res.List()
-		checkErr(err, "ZRANGE " + key + " res.List()")
+		checkErr(err, "ZRANGE "+key+" res.List()")
 		fmt.Println("VAL:", set, "\n")
 	case "list":
 		res = cli.Cmd("LRANGE", key, 0, -1)
-		checkErr(res.Err, "LRANGE " + key)
+		checkErr(res.Err, "LRANGE "+key)
 		list, err := res.List()
-    checkErr(err, "LRANGE " + key + " res.List()")
+		checkErr(err, "LRANGE "+key+" res.List()")
 		fmt.Println("VAL:", list, "\n")
 	default:
 		fail(key_t)
@@ -266,8 +266,8 @@ func ppHash(h map[string]string, j bool) {
 }
 
 func fail(message string) {
-		fmt.Fprintf(os.Stderr, "ERROR: %s\n", message)
-		os.Exit(1)
+	fmt.Fprintf(os.Stderr, "ERROR: %s\n", message)
+	os.Exit(1)
 }
 
 func checkErr(err interface{}, action string) {
@@ -277,18 +277,18 @@ func checkErr(err interface{}, action string) {
 	}
 }
 
-func genRespProto(a... interface{}) {
-  fmt.Printf("*%d\r\n",len(a))
+func genRespProto(a ...interface{}) {
+	fmt.Printf("*%d\r\n", len(a))
 	for _, e := range a {
-    switch v := e.(type) {
-    case string:
-      fmt.Printf("$%d\r\n%s\r\n",len(v),v)
-    case []byte:
-      fmt.Printf("$%d\r\n%s\r\n",len(v),v)
-    case int64:
-      fmt.Printf("$%d\r\n%d\r\n",len(fmt.Sprintf("%d",v)),v)
-    default:
-      fail("error generating redis resp proto") 
-    }
-  }
+		switch v := e.(type) {
+		case string:
+			fmt.Printf("$%d\r\n%s\r\n", len(v), v)
+		case []byte:
+			fmt.Printf("$%d\r\n%s\r\n", len(v), v)
+		case int64:
+			fmt.Printf("$%d\r\n%d\r\n", len(fmt.Sprintf("%d", v)), v)
+		default:
+			fail("error generating redis resp proto")
+		}
+	}
 }
