@@ -1,3 +1,8 @@
+# ATTENTION
+
+This project is no longer maintaned in this repository. I keep it for archival purposes.
+A more up to date and maintained fork of the utility can be found here https://github.com/Sensedia/rutil
+
 # intro
 
 rutil is a small command line utility that lets you selectively dump, 
